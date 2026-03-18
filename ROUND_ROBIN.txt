@@ -1,0 +1,149 @@
+RTL
+-----------------------------------------------------------------------------------------------
+module rra (
+    input        clk,
+    input        rst,          // active low reset
+    input  [3:0] req,
+    output reg [3:0] gnt
+);
+
+    // State Encoding
+    parameter S0 = 2'd0,
+              S1 = 2'd1,
+              S2 = 2'd2,
+              S3 = 2'd3;
+
+    reg [1:0] present_state, next_state;
+
+    // --------------------------------
+    // State Register
+    // --------------------------------
+    always @(posedge clk or negedge rst) begin
+        if(!rst) begin
+            present_state <= S0;
+        end
+        else begin
+            present_state <= next_state;
+        end
+    end
+
+    // --------------------------------
+    // Next State Logic
+    // --------------------------------
+    always @(*) begin
+        next_state = present_state;
+
+        case(present_state)
+
+            S0: begin
+                if(req[0]) begin
+                    next_state = S1;
+                end
+                else if(req[1]) begin
+                    next_state = S2;
+                end
+                else if(req[2]) begin
+                    next_state = S3;
+                end
+                else if(req[3]) begin
+                    next_state = S0;
+                end
+                else begin
+                    next_state = S0;
+                end
+            end
+
+            S1: begin
+                if(req[1]) begin
+                    next_state = S2;
+                end
+                else if(req[2]) begin
+                    next_state = S3;
+                end
+                else if(req[3]) begin
+                    next_state = S0;
+                end
+                else if(req[0]) begin
+                    next_state = S1;
+                end
+                else begin
+                    next_state = S1;
+                end
+            end
+
+            S2: begin
+                if(req[2]) begin
+                    next_state = S3;
+                end
+                else if(req[3]) begin
+                    next_state = S0;
+                end
+                else if(req[0]) begin
+                    next_state = S1;
+                end
+                else if(req[1]) begin
+                    next_state = S2;
+                end
+                else begin
+                    next_state = S2;
+                end
+            end
+
+            S3: begin
+                if(req[3]) begin
+                    next_state = S0;
+                end
+                else if(req[0]) begin
+                    next_state = S1;
+                end
+                else if(req[1]) begin
+                    next_state = S2;
+                end
+                else if(req[2]) begin
+                    next_state = S3;
+                end
+                else begin
+                    next_state = S3;
+                end
+            end
+
+            default: begin
+                next_state = S0;
+            end
+
+        endcase
+    end
+
+    // --------------------------------
+    // Output Logic (Moore Machine)
+    // --------------------------------
+    always @(posedge clk or negedge rst) begin
+        if(!rst) begin
+            gnt <= 4'b0001;  
+        end
+        else begin
+            case(present_state)
+                S0: begin
+                    gnt <= 4'b0001;
+                end
+                S1: begin
+                    gnt <= 4'b0010;
+                end
+                S2: begin
+                    gnt <= 4'b0100;
+                end
+                S3: begin
+                    gnt <= 4'b1000;
+                end
+                default: begin
+                    gnt <= 4'b0001;
+                end
+            endcase
+        end
+    end
+
+endmodule
+--------------------------------------------------------------------------------------------------------------------
+
+TESTBENCH
+--------------------------------------------------------------------------------------------------------------------
